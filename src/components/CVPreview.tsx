@@ -11,7 +11,7 @@ export default function CVPreview({personalInfo, education, experience, skills}:
     return (
         <div className="mx-auto w-full max-w-[210mm] min-h-[297mm] overflow-hidden bg-white px-6 py-8 font-serif text-gray-900 shadow-xl sm:px-10 sm:py-12">
             <header className="border-b-2 border-gray-900 pb-6">
-                <h2 className="break-words text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
+                <h2 className="wrap-break-word text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
                     {personalInfo.name || "Your Name"}
                 </h2>
                 <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm text-gray-600">
