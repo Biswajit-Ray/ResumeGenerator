@@ -33,12 +33,20 @@ export default function BuilderPage(){
     })
 
     const [skillInput, setSkillInput]= useState("");
+    const [validationMessage, setValidationMessage] = useState("");
 
     return(
         <>
         <Navbar/>
         <div className="lg:grid lg:grid-cols-2 lg:items-start gap-6 p-4 sm:p-6">    
-            <form action="#" className=" grid gap-10">
+            <form
+            onChange={()=>setValidationMessage("")}
+            onSubmit={(event)=>{
+                event.preventDefault();
+                setValidationMessage("All entered details are valid.");
+            }}
+            className="grid gap-10"
+            >
                 
                 <PersonalInfoForm 
                 personalInfo={cvData.personalInfo} 
@@ -86,6 +94,20 @@ export default function BuilderPage(){
                         )
                     )
                 }/>
+
+                <div>
+                    <button
+                    type="submit"
+                    className="rounded-xl bg-black px-5 py-3 font-medium text-white hover:bg-gray-800"
+                    >
+                        Validate Details
+                    </button>
+                    {validationMessage && (
+                        <p role="status" className="mt-2 text-sm text-green-700">
+                            {validationMessage}
+                        </p>
+                    )}
+                </div>
 
             </form>
 

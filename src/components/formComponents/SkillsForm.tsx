@@ -1,4 +1,5 @@
 import { Trash } from "lucide-react";
+import { useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 
 interface SkillInputProps{
@@ -9,18 +10,31 @@ interface SkillInputProps{
 }
 
 export default function SkillsForm({skillInput, skills, setSkillInput, onChange}: SkillInputProps){
-    
+    const [skillError, setSkillError] = useState("");
+
     return(
         <fieldset className="border bg-gray-100 rounded-xl mx-auto max-w-xl w-full p-6">
                     <legend className="text-xl font-bold">Skills</legend>
-                    <label >Enter A Skill</label>
+                    <label htmlFor="skill-input">Enter A Skill</label>
                     <input
+                        id="skill-input"
                         type="text"
                         placeholder="Enter a skill"
                         value={skillInput}
-                        onChange={(e)=>setSkillInput(e.target.value)}
+                        onChange={(e)=>{
+                            setSkillInput(e.target.value);
+                            setSkillError("");
+                        }}
                         className="w-full px-3 py-2 border-2 rounded-xl bg-white"
+                        maxLength={60}
+                        aria-invalid={Boolean(skillError)}
+                        aria-describedby={skillError ? "skill-error" : undefined}
                     />
+                    {skillError && (
+                        <p id="skill-error" role="alert" className="mt-1 text-sm text-red-700">
+                            {skillError}
+                        </p>
+                    )}
 
                     <div className="mt-4 flex flex-wrap gap-2">
                         {skills.map((skill, index) => (
@@ -49,9 +63,18 @@ export default function SkillsForm({skillInput, skills, setSkillInput, onChange}
                         <button
                             type="button"
                             onClick={()=>{
-                                if(skillInput.trim()==="") return;
+                                const newSkill = skillInput.trim();
+                                if(newSkill === ""){
+                                    setSkillError("Enter a skill before adding it.");
+                                    return;
+                                }
+                                if(skills.some((skill)=>skill.toLocaleLowerCase() === newSkill.toLocaleLowerCase())){
+                                    setSkillError("This skill has already been added.");
+                                    return;
+                                }
                                 onChange([...skills, skillInput.trim()]);
                                 setSkillInput("");
+                                setSkillError("");
                             }}
                             className="mt-3 bg-black text-white px-4 py-2 rounded-xl grid justify-end"
                             >

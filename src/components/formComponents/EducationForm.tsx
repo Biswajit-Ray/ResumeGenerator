@@ -26,8 +26,13 @@ export default function EducationForm({education, onChange}: EducationFormProps)
                         </button>
                     </div>
                     {
-                        education.map((entry, index)=>
-                            (<div key={index} className="grid gap-4 border rounded-sm bg-white mt-6 px-4 pb-3 pt-3 sm:grid-cols-2">
+                        education.map((entry, index)=>{
+                            const hasEducationDetails = Boolean(
+                                entry.degree.trim() || entry.institution.trim() || entry.year.trim()
+                            );
+
+                            return (
+                            <div key={index} className="grid gap-4 border rounded-sm bg-white mt-6 px-4 pb-3 pt-3 sm:grid-cols-2">
                                 <div className="grid mt-1">
                                     <label className="font-semibold">Degree</label>
                                     <input type="text"
@@ -42,6 +47,10 @@ export default function EducationForm({education, onChange}: EducationFormProps)
                                         )
                                     }}
                                     className="px-3 py-2 border-2 rounded-xl bg-gray-100"
+                                    required={hasEducationDetails}
+                                    maxLength={120}
+                                    pattern=".*\S.*"
+                                    title="Degree must include at least one non-space character."
                                     />
                                 </div>
                                 <div className="grid mt-1">
@@ -59,6 +68,10 @@ export default function EducationForm({education, onChange}: EducationFormProps)
                                         )
                                     }}
                                     className="px-3 py-2 border-2 rounded-xl bg-gray-100"
+                                    required={hasEducationDetails}
+                                    maxLength={160}
+                                    pattern=".*\S.*"
+                                    title="Institution must include at least one non-space character."
                                     />
                                 </div>
                                 <div className="grid mt-1 sm:col-span-2">
@@ -66,16 +79,22 @@ export default function EducationForm({education, onChange}: EducationFormProps)
                                     <input type="text"
                                     value={entry.year}
                                     placeholder="year"
+                                    inputMode="numeric"
                                     onChange={(e)=>{
+                                        const year = e.target.value.replace(/\D/g, "").slice(0, 4);
                                         onChange(
                                             education.map(
                                                 (item, i)=> index===i 
-                                                ?{...item, year: e.target.value}
+                                                ?{...item, year}
                                                 : item
                                             )
                                         )
                                     }}
                                     className="px-3 py-2 border-2 rounded-xl bg-gray-100"
+                                    required={hasEducationDetails}
+                                    pattern="[0-9]{4}"
+                                    title="Enter a four-digit year."
+                                    maxLength={4}
                                     />
                                 </div>
                                 {education.length > 1 && (
@@ -87,8 +106,9 @@ export default function EducationForm({education, onChange}: EducationFormProps)
                                         Remove
                                     </button>
                                 )}
-                            </div>)
-                        )
+                            </div>
+                            );
+                        })
                     }
                 </fieldset>
     )
