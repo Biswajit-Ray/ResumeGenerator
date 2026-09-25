@@ -3,10 +3,10 @@ import type { Experience } from "../../types/cv";
 
 interface WorkExperienceFormProps{
     experience: Experience[],
-    setExperience: React.Dispatch<React.SetStateAction<Experience[]>>
+    onChange: (updatedInfo: Experience[])=> void;
 }
 
-export default function WorkExperienceForm({experience, setExperience}: WorkExperienceFormProps){
+export default function WorkExperienceForm({experience, onChange}: WorkExperienceFormProps){
     
 
     
@@ -17,7 +17,7 @@ export default function WorkExperienceForm({experience, setExperience}: WorkExpe
                     <div className="grid justify-end">
                         <button
                         type="button"
-                        onClick={()=>setExperience([{
+                        onClick={()=>onChange([{
                             company: "",
                             position: "",
                             startDate: "",
@@ -37,8 +37,7 @@ export default function WorkExperienceForm({experience, setExperience}: WorkExpe
                                     <label className="mb-1 block font-medium">Company Name</label>
                                     <input type="text" 
                                     value={entry.company}
-                                    onChange={(e)=>setExperience((prevExperience)=>
-                                        prevExperience.map((item, i)=> index !==i ? item : {...item, company:e.target.value} )
+                                    onChange={(e)=>onChange(experience.map((item, i)=> index !==i ? item : {...item, company:e.target.value} )
                                     )}
                                     className="w-full px-3 py-2 border-2 rounded-xl bg-gray-100"
                                     />
@@ -47,8 +46,8 @@ export default function WorkExperienceForm({experience, setExperience}: WorkExpe
                                     <label className="mb-1 block font-medium">Position</label>
                                     <input type="text" 
                                     value={entry.position}
-                                    onChange={(e)=>setExperience((prevExperience)=>
-                                        prevExperience.map((item, i)=> index !==i ? item : {...item, position:e.target.value} )
+                                    onChange={(e)=>onChange(
+                                        experience.map((item, i)=> index !==i ? item : {...item, position:e.target.value} )
                                     )}
                                     className="w-full px-3 py-2 border-2 rounded-xl bg-gray-100"
                                     />
@@ -57,18 +56,16 @@ export default function WorkExperienceForm({experience, setExperience}: WorkExpe
                                     <label className="mb-1 block font-medium">Start Date</label>
                                     <input type="month" 
                                     value={entry.startDate}
-                                    onChange={(e)=>setExperience((prevExperience)=>
-                                        prevExperience.map((item, i)=> index !==i ? item : {...item, startDate:e.target.value} )
+                                    onChange={(e)=>onChange(experience.map((item, i)=> index !==i ? item : {...item, startDate:e.target.value} )
                                     )}
                                     className="w-full px-3 py-2 border-2 rounded-xl bg-gray-100"
                                     />
                                 </div>
                                 <div className="w-full">
                                     <label className="mb-1 block font-medium">End Date</label>
-                                    <input type="month" 
+                                    <input type="month"
                                     value={entry.endDate}
-                                    onChange={(e)=>setExperience((prevExperience)=>
-                                        prevExperience.map((item, i)=> index !==i ? item : {...item, endDate:e.target.value} )
+                                    onChange={(e)=>onChange(experience.map((item, i)=> index !==i ? item : {...item, endDate:e.target.value} )
                                     )}
                                     className="w-full px-3 py-2 border-2 rounded-xl bg-gray-100"
                                     />
@@ -77,20 +74,21 @@ export default function WorkExperienceForm({experience, setExperience}: WorkExpe
                                     <label className="mb-1 block font-medium">Description</label>
                                     <textarea
                                     value={entry.description}
-                                    onChange={(e)=>setExperience((prevExperience)=>
-                                        prevExperience.map((item, i)=> index !==i ? item : {...item, description:e.target.value} )
+                                    onChange={(e)=>onChange(experience.map((item, i)=> index !==i ? item : {...item, description:e.target.value} )
                                     )}
                                     className="w-full px-3 py-2 border-2 rounded-xl bg-gray-100"
                                     rows={3}
                                     />
                                 </div>
-                                <button
-                                type="button"
-                                onClick={()=>setExperience((prevExperience)=> prevExperience.filter((_, i)=> index !== i))}
-                                className="bg-black text-white rounded-xl ms-auto px-4 py-2 mt-2 hover:bg-gray-900 hover:cursor-pointer sm:col-span-2"
-                                >
-                                    Remove
-                                </button>
+                                {experience.length > 1 && (
+                                    <button
+                                    type="button"
+                                    onClick={()=>onChange(experience.filter((_, i)=> index !== i))}
+                                    className="bg-black text-white rounded-xl ms-auto px-4 py-2 mt-2 hover:bg-gray-900 hover:cursor-pointer sm:col-span-2"
+                                    >
+                                        Remove
+                                    </button>
+                                )}
                             </div>
                         ))}
 

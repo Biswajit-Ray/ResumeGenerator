@@ -5,10 +5,10 @@ interface SkillInputProps{
     skillInput: string,
     skills: string[],
     setSkillInput: Dispatch<SetStateAction<string>>,
-    setSkills: Dispatch<SetStateAction<string[]>>
+    onChange: (updatedExperience: string[])=>void,
 }
 
-export default function SkillsForm({skillInput, skills, setSkillInput, setSkills}: SkillInputProps){
+export default function SkillsForm({skillInput, skills, setSkillInput, onChange}: SkillInputProps){
     
     return(
         <fieldset className="border bg-gray-100 rounded-xl mx-auto max-w-xl w-full p-6">
@@ -35,7 +35,7 @@ export default function SkillsForm({skillInput, skills, setSkillInput, setSkills
     
                             <button
                             type="button"
-                            onClick={()=>setSkills((prevSkills)=>prevSkills.filter((_, i)=> i!==index ))}
+                            onClick={()=>onChange(skills.filter((_, i)=> i!==index ))}
                             className="cursor-pointer ms-auto w-auto"
                             >
                                 <Trash size={16}/>
@@ -50,7 +50,7 @@ export default function SkillsForm({skillInput, skills, setSkillInput, setSkills
                             type="button"
                             onClick={()=>{
                                 if(skillInput.trim()==="") return;
-                                setSkills([...skills, skillInput.trim()]);
+                                onChange([...skills, skillInput.trim()]);
                                 setSkillInput("");
                             }}
                             className="mt-3 bg-black text-white px-4 py-2 rounded-xl grid justify-end"

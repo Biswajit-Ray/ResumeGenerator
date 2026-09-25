@@ -18,4 +18,12 @@ export interface Experience{
     description: string;
 }
 
-export type CVTemplate = "classic" | "modern";
+export type CVTemplate = "classic" | "modern" | "minimal" | "executive";
+
+export interface CVData{
+    personalInfo: PersonalInfo;
+    education: Education[];
+    experience: Experience[];
+    skills: string[];
+    template: CVTemplate;
+}
