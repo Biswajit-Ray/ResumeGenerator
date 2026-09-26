@@ -4,7 +4,7 @@ import PersonalInfoForm from "../components/formComponents/PersonalInfoForm";
 import EducationForm from "../components/formComponents/EducationForm";
 import WorkExperienceForm from "../components/formComponents/WorkExperienceForm";
 import SkillsForm from "../components/formComponents/SkillsForm";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CVData } from "../types/cv";
 import TemplateSelector from "../components/TemplateSelector";
 import { FileDown } from "lucide-react";
@@ -36,6 +36,7 @@ function getFieldError(field: HTMLInputElement | HTMLTextAreaElement) {
 
 export default function BuilderPage(){
     const formRef = useRef<HTMLFormElement>(null);
+    const downloadButtonRef = useRef<HTMLButtonElement>(null);
 
     const [cvData, setCvData]= useState<CVData>({
         personalInfo:{
@@ -58,6 +59,94 @@ export default function BuilderPage(){
     const [validationError, setValidationError] = useState("");
     const [exportError, setExportError] = useState("");
     const [isExporting, setIsExporting] = useState(false);
+    const [downloadButtonPosition, setDownloadButtonPosition] = useState<{ left: number; top: number } | null>(null);
+
+    useEffect(() => {
+        const preview = document.getElementById("cv-preview");
+        if (!preview) {
+            return;
+        }
+
+        const updateButtonPosition = () => {
+            const button = downloadButtonRef.current;
+            if (!button) {
+                return;
+            }
+
+            const previewBounds = preview.getBoundingClientRect();
+            const buttonBounds = button.getBoundingClientRect();
+            const padding = 16;
+            const minLeft = Math.max(previewBounds.left + padding, padding);
+            const maxLeft = Math.min(
+                previewBounds.right - buttonBounds.width - padding,
+                window.innerWidth - buttonBounds.width - padding,
+            );
+            const minTop = Math.max(previewBounds.top + padding, padding);
+            const maxTop = Math.min(
+                previewBounds.bottom - buttonBounds.height - padding,
+                window.innerHeight - buttonBounds.height - padding,
+            );
+
+            if (minLeft > maxLeft || minTop > maxTop) {
+                setDownloadButtonPosition(null);
+                return;
+            }
+
+            setDownloadButtonPosition({
+                left: maxLeft,
+                top: maxTop,
+            });
+        };
+
+        updateButtonPosition();
+        window.addEventListener("scroll", updateButtonPosition, { passive: true });
+        window.addEventListener("resize", updateButtonPosition);
+        const resizeObserver = new ResizeObserver(updateButtonPosition);
+        resizeObserver.observe(preview);
+
+        return () => {
+            window.removeEventListener("scroll", updateButtonPosition);
+            window.removeEventListener("resize", updateButtonPosition);
+            resizeObserver.disconnect();
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!import.meta.env.DEV) {
+            return;
+        }
+
+        let cancelled = false;
+        let unregisterHelper: (() => void) | undefined;
+
+        void import("../testProject").then(({ registerDummyResumeHelper }) => {
+            if (cancelled) {
+                return;
+            }
+
+            unregisterHelper = registerDummyResumeHelper((data) => {
+                setCvData(data);
+                setSkillInput("");
+                setValidationMessage("");
+                setValidationError("");
+                setExportError("");
+                formRef.current?.querySelectorAll("input, textarea").forEach((field) => {
+                    if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) {
+                        field.setCustomValidity("");
+                        field.removeAttribute("aria-invalid");
+                        delete field.dataset.invalidField;
+                    }
+                });
+            });
+        }).catch((error: unknown) => {
+            console.error("Failed to load the developer form helper.", error);
+        });
+
+        return () => {
+            cancelled = true;
+            unregisterHelper?.();
+        };
+    }, []);
 
     const handleExportPDF = async ()=>{
         const form = formRef.current;
@@ -149,7 +238,7 @@ export default function BuilderPage(){
     return(
         <>
         <Navbar/>
-        <div className="lg:grid lg:grid-cols-2 lg:items-start gap-6 p-4 sm:p-6">    
+        <div className="grid gap-6 p-4 sm:p-6 lg:grid-cols-2 lg:items-start">
             <form
             ref={formRef}
             onChange={(event)=>{
@@ -320,11 +409,20 @@ export default function BuilderPage(){
         )}
 
         <button
+            ref={downloadButtonRef}
             type="button"
             onClick={handleExportPDF}
             disabled={isExporting}
             aria-busy={isExporting}
-            className="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-700 px-5 py-3 font-semibold text-white shadow-lg shadow-blue-950/20 transition hover:bg-blue-800 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-wait disabled:opacity-80"
+            aria-hidden={!downloadButtonPosition}
+            tabIndex={downloadButtonPosition ? 0 : -1}
+            style={{
+                left: downloadButtonPosition?.left ?? 0,
+                top: downloadButtonPosition?.top ?? 0,
+                visibility: downloadButtonPosition ? "visible" : "hidden",
+                pointerEvents: downloadButtonPosition ? "auto" : "none",
+            }}
+            className="fixed z-40 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-700 px-5 py-3 font-semibold text-white shadow-lg shadow-blue-950/20 transition hover:bg-blue-800 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-wait disabled:opacity-80"
         >
             <FileDown size={20} aria-hidden="true" />
             {isExporting ? "Preparing PDF..." : "Download PDF"}
