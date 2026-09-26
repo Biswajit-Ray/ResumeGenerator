@@ -4,9 +4,10 @@ import PersonalInfoForm from "../components/formComponents/PersonalInfoForm";
 import EducationForm from "../components/formComponents/EducationForm";
 import WorkExperienceForm from "../components/formComponents/WorkExperienceForm";
 import SkillsForm from "../components/formComponents/SkillsForm";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { CVData } from "../types/cv";
 import TemplateSelector from "../components/TemplateSelector";
+import { FileDown } from "lucide-react";
 
 function getFieldError(field: HTMLInputElement | HTMLTextAreaElement) {
     const fieldName = field.closest("div")?.querySelector("label")?.textContent
@@ -34,6 +35,7 @@ function getFieldError(field: HTMLInputElement | HTMLTextAreaElement) {
 }
 
 export default function BuilderPage(){
+    const formRef = useRef<HTMLFormElement>(null);
 
     const [cvData, setCvData]= useState<CVData>({
         personalInfo:{
@@ -54,12 +56,102 @@ export default function BuilderPage(){
     const [skillInput, setSkillInput]= useState("");
     const [validationMessage, setValidationMessage] = useState("");
     const [validationError, setValidationError] = useState("");
+    const [exportError, setExportError] = useState("");
+    const [isExporting, setIsExporting] = useState(false);
+
+    const handleExportPDF = async ()=>{
+        const form = formRef.current;
+        if (!form) {
+            setExportError("The resume form is not available. Please try again.");
+            return;
+        }
+        if (!form.checkValidity()) {
+            setValidationMessage("");
+            form.reportValidity();
+            return;
+        }
+
+        setValidationError("");
+        const element= document.getElementById("cv-preview");
+
+        if (!element) {
+            setExportError("The resume preview is not available. Please try again.");
+            return;
+        }
+
+        setIsExporting(true);
+        setExportError("");
+        try {
+            const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+                import("html2canvas"),
+                import("jspdf"),
+            ]);
+            const canvas= await html2canvas(element, {
+                scale: 2
+            })
+
+            const pdf = new jsPDF({
+                orientation: "portrait",
+                unit: "mm",
+                format: "a4",
+            })
+
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const pageHeightInPixels = canvas.width * pageHeight / pageWidth;
+            const pageCanvas = document.createElement("canvas");
+            const pageContext = pageCanvas.getContext("2d");
+
+            if (!pageContext) {
+                throw new Error("Could not create a canvas context for PDF export.");
+            }
+
+            pageCanvas.width = canvas.width;
+            for (let page = 0; page * pageHeightInPixels < canvas.height; page += 1) {
+                const sourceY = page * pageHeightInPixels;
+                const sliceHeight = Math.min(pageHeightInPixels, canvas.height - sourceY);
+                pageCanvas.height = Math.ceil(sliceHeight);
+                pageContext.clearRect(0, 0, pageCanvas.width, pageCanvas.height);
+                pageContext.drawImage(
+                    canvas,
+                    0,
+                    sourceY,
+                    canvas.width,
+                    sliceHeight,
+                    0,
+                    0,
+                    pageCanvas.width,
+                    sliceHeight,
+                );
+
+                if (page > 0) {
+                    pdf.addPage();
+                }
+                pdf.addImage(
+                    pageCanvas.toDataURL("image/png"),
+                    "PNG",
+                    0,
+                    0,
+                    pageWidth,
+                    sliceHeight * pageWidth / canvas.width,
+                );
+            }
+
+            pdf.save("my-cv.pdf")
+        } catch (error) {
+            console.error("Failed to export resume as PDF.", error);
+            setExportError("Unable to download the PDF. Please try again.");
+        } finally {
+            setIsExporting(false);
+        }
+    }
 
     return(
         <>
         <Navbar/>
         <div className="lg:grid lg:grid-cols-2 lg:items-start gap-6 p-4 sm:p-6">    
             <form
+            ref={formRef}
             onChange={(event)=>{
                 setValidationMessage("");
                 setValidationError("");
@@ -76,7 +168,9 @@ export default function BuilderPage(){
             onInvalidCapture={(event)=>{
                 const field = event.target;
                 if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) {
-                    const message = getFieldError(field);
+                    const message = field.validity.customError
+                        ? field.validationMessage
+                        : getFieldError(field);
                     field.setCustomValidity(message);
                     field.dataset.invalidField = "true";
                     field.setAttribute("aria-invalid", "true");
@@ -202,6 +296,39 @@ export default function BuilderPage(){
                 </div>
             </div>
         )}
+
+        {exportError && (
+            <div
+                role="alert"
+                className="fixed left-1/2 top-6 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-red-300 border-l-4 border-l-red-600 bg-amber-50 p-4 shadow-lg"
+            >
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <p className="font-semibold text-gray-900">PDF download failed</p>
+                        <p className="mt-1 text-sm text-gray-800">{exportError}</p>
+                    </div>
+                    <button
+                        type="button"
+                        aria-label="Dismiss PDF download error"
+                        onClick={() => setExportError("")}
+                        className="rounded px-2 text-lg leading-none text-gray-700 hover:bg-amber-100"
+                    >
+                        ×
+                    </button>
+                </div>
+            </div>
+        )}
+
+        <button
+            type="button"
+            onClick={handleExportPDF}
+            disabled={isExporting}
+            aria-busy={isExporting}
+            className="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-700 px-5 py-3 font-semibold text-white shadow-lg shadow-blue-950/20 transition hover:bg-blue-800 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-wait disabled:opacity-80"
+        >
+            <FileDown size={20} aria-hidden="true" />
+            {isExporting ? "Preparing PDF..." : "Download PDF"}
+        </button>
         </>
     )
 }

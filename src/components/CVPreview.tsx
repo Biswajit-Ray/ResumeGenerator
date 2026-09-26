@@ -91,7 +91,9 @@ export default function CVPreview({personalInfo, education, experience, skills, 
     );
 
     return (
-        <div className={`mx-auto min-h-[297mm] w-full max-w-[210mm] overflow-hidden bg-white px-6 py-8 text-gray-900 shadow-xl sm:px-10 sm:py-12 ${styles.font}`}>
+        <div 
+        id="cv-preview"
+        className={`mx-auto min-h-[297mm] w-full max-w-[210mm] overflow-hidden bg-white px-6 py-8 text-gray-900 shadow-xl sm:px-10 sm:py-12 ${styles.font}`}>
             <header className={`pb-6 ${styles.headerBorder}`}>
                 <h2 className={`wrap-break-word text-4xl font-bold leading-tight tracking-tight sm:text-5xl ${styles.name}`}>
                     {personalInfo.name || "Your Name"}
