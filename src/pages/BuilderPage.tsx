@@ -8,6 +8,31 @@ import { useState } from "react";
 import type { CVData } from "../types/cv";
 import TemplateSelector from "../components/TemplateSelector";
 
+function getFieldError(field: HTMLInputElement | HTMLTextAreaElement) {
+    const fieldName = field.closest("div")?.querySelector("label")?.textContent
+        ?.replace("*", "")
+        .trim()
+        .toLowerCase() || "this field";
+
+    if (field.validity.valueMissing) {
+        return `Please enter ${fieldName}.`;
+    }
+    if (field.validity.typeMismatch && field instanceof HTMLInputElement && field.type === "email") {
+        return "Please enter a valid email address.";
+    }
+    if (field.validity.patternMismatch && field.title) {
+        return field.title;
+    }
+    if (field.validity.rangeUnderflow) {
+        return `${fieldName} must be on or after the start date.`;
+    }
+    if (field.validity.badInput) {
+        return `Please enter a valid ${fieldName}.`;
+    }
+
+    return `Please check the value entered for ${fieldName}.`;
+}
+
 export default function BuilderPage(){
 
     const [cvData, setCvData]= useState<CVData>({
@@ -21,28 +46,58 @@ export default function BuilderPage(){
             degree: "",
             year: "",
         }],
-        experience: [{
-            company: "",
-            position: "",
-            startDate: "",
-            endDate: "",
-            description: "",
-        }],
+        experience: [],
         skills: [],
         template: "classic",
     })
 
     const [skillInput, setSkillInput]= useState("");
     const [validationMessage, setValidationMessage] = useState("");
+    const [validationError, setValidationError] = useState("");
 
     return(
         <>
         <Navbar/>
         <div className="lg:grid lg:grid-cols-2 lg:items-start gap-6 p-4 sm:p-6">    
             <form
-            onChange={()=>setValidationMessage("")}
+            onChange={(event)=>{
+                setValidationMessage("");
+                setValidationError("");
+                event.currentTarget.querySelectorAll("input, textarea").forEach((field)=>{
+                    if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) {
+                        field.setCustomValidity("");
+                        if (field.dataset.invalidField) {
+                            field.removeAttribute("aria-invalid");
+                            delete field.dataset.invalidField;
+                        }
+                    }
+                });
+            }}
+            onInvalidCapture={(event)=>{
+                const field = event.target;
+                if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) {
+                    const message = getFieldError(field);
+                    field.setCustomValidity(message);
+                    field.dataset.invalidField = "true";
+                    field.setAttribute("aria-invalid", "true");
+                    const firstInvalidField = event.currentTarget.querySelector('[data-invalid-field="true"]');
+                    if (firstInvalidField === field) {
+                        setValidationError(message);
+                    }
+                }
+            }}
             onSubmit={(event)=>{
                 event.preventDefault();
+
+                const form= event.target;
+
+                if(!form.checkValidity()){
+                    setValidationMessage("");
+                    form.reportValidity();
+                    return;
+                }
+
+                setValidationError("");
                 setValidationMessage("All entered details are valid.");
             }}
             className="grid gap-10"
@@ -125,6 +180,28 @@ export default function BuilderPage(){
                 <CVPreview personalInfo={cvData.personalInfo} education={cvData.education} experience={cvData.experience} skills={cvData.skills} template={cvData.template}/>
             </div>
         </div>
+        {validationError && (
+            <div
+                role="alert"
+                aria-live="assertive"
+                className="fixed left-1/2 top-6 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-red-300 border-l-4 border-l-red-600 bg-amber-50 p-4 shadow-lg"
+            >
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <p className="font-semibold text-gray-900">Please check your details</p>
+                        <p className="mt-1 text-sm text-gray-800">{validationError}</p>
+                    </div>
+                    <button
+                        type="button"
+                        aria-label="Dismiss validation message"
+                        onClick={() => setValidationError("")}
+                        className="rounded px-2 text-lg leading-none text-gray-700 hover:bg-amber-100"
+                    >
+                        ×
+                    </button>
+                </div>
+            </div>
+        )}
         </>
     )
 }

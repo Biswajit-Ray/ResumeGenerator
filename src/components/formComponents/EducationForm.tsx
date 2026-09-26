@@ -31,6 +31,8 @@ export default function EducationForm({education, onChange}: EducationFormProps)
                                 entry.degree.trim() || entry.institution.trim() || entry.year.trim()
                             );
 
+                            const isRequired= index===0 || hasEducationDetails;
+
                             return (
                             <div key={index} className="grid gap-4 border rounded-sm bg-white mt-6 px-4 pb-3 pt-3 sm:grid-cols-2">
                                 <div className="grid mt-1">
@@ -47,7 +49,7 @@ export default function EducationForm({education, onChange}: EducationFormProps)
                                         )
                                     }}
                                     className="px-3 py-2 border-2 rounded-xl bg-gray-100"
-                                    required={hasEducationDetails}
+                                    required={isRequired}
                                     maxLength={120}
                                     pattern=".*\S.*"
                                     title="Degree must include at least one non-space character."
@@ -68,7 +70,7 @@ export default function EducationForm({education, onChange}: EducationFormProps)
                                         )
                                     }}
                                     className="px-3 py-2 border-2 rounded-xl bg-gray-100"
-                                    required={hasEducationDetails}
+                                    required={isRequired}
                                     maxLength={160}
                                     pattern=".*\S.*"
                                     title="Institution must include at least one non-space character."
@@ -91,7 +93,7 @@ export default function EducationForm({education, onChange}: EducationFormProps)
                                         )
                                     }}
                                     className="px-3 py-2 border-2 rounded-xl bg-gray-100"
-                                    required={hasEducationDetails}
+                                    required={isRequired}
                                     pattern="[0-9]{4}"
                                     title="Enter a four-digit year."
                                     maxLength={4}

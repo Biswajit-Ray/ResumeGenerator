@@ -6,7 +6,7 @@ interface SkillInputProps{
     skillInput: string,
     skills: string[],
     setSkillInput: Dispatch<SetStateAction<string>>,
-    onChange: (updatedExperience: string[])=>void,
+    onChange: (updatedSkills: string[])=>void,
 }
 
 export default function SkillsForm({skillInput, skills, setSkillInput, onChange}: SkillInputProps){

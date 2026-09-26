@@ -1,1 +1,6 @@
 @import "tailwindcss";
+
+form [data-invalid-field="true"] {
+    border-color: #dc2626;
+    background-color: #fef3c7;
+}

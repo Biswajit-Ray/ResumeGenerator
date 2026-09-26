@@ -14,7 +14,7 @@ export default function WorkExperienceForm({experience, onChange}: WorkExperienc
         <fieldset className="border bg-gray-100 rounded-xl mx-auto max-w-xl w-full p-6">{ /* WORK EXPERINCE */}
                     <legend className="text-xl font-bold"> Work Experience</legend>
 
-                    <div className="grid justify-end">
+                    <div >
                         <button
                         type="button"
                         onClick={()=>onChange([{
@@ -24,7 +24,7 @@ export default function WorkExperienceForm({experience, onChange}: WorkExperienc
                             endDate: "",
                             description: "",
                         },...experience])}
-                        className="grid grid-cols-2 bg-black text-white px-2 py-1 rounded-sm items-center text-center max-w-24 mx-aut ps-5 hover:bg-gray-800 hover:cursor-pointer"
+                        className="grid grid-cols-2 bg-black text-white px-2 py-1 rounded-sm items-center text-center max-w-24 ms-auto ps-5 hover:bg-gray-800 hover:cursor-pointer"
                         >
                             Add <Plus size={20} color="white"/>
                         </button>
@@ -97,7 +97,7 @@ export default function WorkExperienceForm({experience, onChange}: WorkExperienc
                                     maxLength={2000}
                                     />
                                 </div>
-                                {experience.length > 1 && (
+                                
                                     <button
                                     type="button"
                                     onClick={()=>onChange(experience.filter((_, i)=> index !== i))}
@@ -105,7 +105,7 @@ export default function WorkExperienceForm({experience, onChange}: WorkExperienc
                                     >
                                         Remove
                                     </button>
-                                )}
+                                
                             </div>
                         );
                     })}
