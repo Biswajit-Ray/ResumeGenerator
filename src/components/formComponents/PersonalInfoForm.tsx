@@ -46,7 +46,7 @@ export default function PersonalInfoForm({personalInfo, onChange}: PersonalFormP
                         onChange={(e)=>onChange({...personalInfo, phone: e.target.value})}
                         className="mt-1 w-full rounded-md border px-3 py-2"
                         autoComplete="tel"
-                        pattern="\+?[0-9][0-9 ().-]{5,18}[0-9]"
+                        pattern="\+?[0-9](?:[0-9 .]|\(|\)|-){5,18}[0-9]"
                         title="Enter a valid phone number using digits, spaces, +, parentheses, dots, or hyphens."
                         required
                         />

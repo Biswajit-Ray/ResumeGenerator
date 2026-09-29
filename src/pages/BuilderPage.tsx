@@ -34,6 +34,58 @@ function getFieldError(field: HTMLInputElement | HTMLTextAreaElement) {
     return `Please check the value entered for ${fieldName}.`;
 }
 
+function convertOklchColors(value: string) {
+    return value.replace(/oklch\(([^)]+)\)/g, (_color, parameters: string) => {
+        const [channels, alphaChannel] = parameters.split("/");
+        const [lightnessChannel, chromaChannel, hueChannel] = channels.trim().split(/\s+/);
+        let lightness = Number.parseFloat(lightnessChannel);
+        let chroma = Number.parseFloat(chromaChannel);
+        let hue = Number.parseFloat(hueChannel);
+
+        if (lightnessChannel.endsWith("%")) {
+            lightness /= 100;
+        }
+        if (chromaChannel.endsWith("%")) {
+            chroma = chroma / 100 * 0.4;
+        }
+        if (hueChannel.endsWith("turn")) {
+            hue *= 360;
+        } else if (hueChannel.endsWith("rad")) {
+            hue = hue * 180 / Math.PI;
+        } else if (hueChannel.endsWith("grad")) {
+            hue *= 0.9;
+        }
+
+        const radians = hue * Math.PI / 180;
+        const a = chroma * Math.cos(radians);
+        const b = chroma * Math.sin(radians);
+        const l = (lightness + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+        const m = (lightness - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+        const s = (lightness - 0.0894841775 * a - 1.291485548 * b) ** 3;
+        const linearRgb = [
+            4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+            -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+            -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+        ];
+        const rgb = linearRgb.map((channel) => {
+            const clipped = Math.max(0, Math.min(1, channel));
+            const srgb = clipped <= 0.0031308
+                ? 12.92 * clipped
+                : 1.055 * clipped ** (1 / 2.4) - 0.055;
+            return Math.round(srgb * 255);
+        });
+
+        if (!alphaChannel) {
+            return `rgb(${rgb.join(", ")})`;
+        }
+
+        const alpha = alphaChannel.trim().endsWith("%")
+            ? Number.parseFloat(alphaChannel) / 100
+            : Number.parseFloat(alphaChannel);
+        return `rgba(${rgb.join(", ")}, ${alpha})`;
+    });
+}
+
 export default function BuilderPage(){
     const formRef = useRef<HTMLFormElement>(null);
     const downloadButtonRef = useRef<HTMLButtonElement>(null);
@@ -176,7 +228,44 @@ export default function BuilderPage(){
                 import("jspdf"),
             ]);
             const canvas= await html2canvas(element, {
-                scale: 2
+                scale: 2,
+                onclone: (clonedDocument) => {
+                    const clonedWindow = clonedDocument.defaultView;
+                    if (!clonedWindow) {
+                        throw new Error("Could not prepare the resume preview for PDF export.");
+                    }
+
+                    const normalizeRules = (rules: CSSRuleList) => {
+                        for (const rule of Array.from(rules)) {
+                            if (rule instanceof clonedWindow.CSSStyleRule) {
+                                for (let index = 0; index < rule.style.length; index += 1) {
+                                    const property = rule.style.item(index);
+                                    const value = rule.style.getPropertyValue(property);
+                                    if (value.includes("oklch(")) {
+                                        rule.style.setProperty(
+                                            property,
+                                            convertOklchColors(value),
+                                            rule.style.getPropertyPriority(property),
+                                        );
+                                    }
+                                }
+                            } else if ("cssRules" in rule) {
+                                normalizeRules((rule as CSSGroupingRule).cssRules);
+                            }
+                        }
+                    };
+
+                    for (const stylesheet of Array.from(clonedDocument.styleSheets)) {
+                        try {
+                            normalizeRules(stylesheet.cssRules);
+                        } catch (error) {
+                            if (error instanceof DOMException && error.name === "SecurityError") {
+                                continue;
+                            }
+                            throw error;
+                        }
+                    }
+                },
             })
 
             const pdf = new jsPDF({
